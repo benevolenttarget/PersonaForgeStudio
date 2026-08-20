@@ -7,41 +7,37 @@ enum class PersonaForgeTier {
 }
 
 data class PersonaForgeCapabilities(
-    val worldContinents: Int?,
+    val worldCreationScope: String,
     val maxRenderResolution: String,
     val modelDownloadLimit: Int?,
     val modelCreationLimit: Int?,
     val forgeSpeed: String,
-    val fullPlanetCreation: Boolean,
-    val advancedLandscapes: Boolean
+    val fullPlanetCreation: Boolean
 )
 
 fun PersonaForgeTier.capabilities(): PersonaForgeCapabilities = when (this) {
     PersonaForgeTier.FREEMIUM -> PersonaForgeCapabilities(
-        worldContinents = 2,
-        maxRenderResolution = "PBR",
+        worldCreationScope = "UP TO 2 CONTINENTS",
+        maxRenderResolution = "BASIC PBR / SHADED PBR",
         modelDownloadLimit = 1,
-        modelCreationLimit = 10,
+        modelCreationLimit = null,
         forgeSpeed = "STANDARD",
-        fullPlanetCreation = false,
-        advancedLandscapes = false
+        fullPlanetCreation = false
     )
     PersonaForgeTier.PREMIUM -> PersonaForgeCapabilities(
-        worldContinents = null,
-        maxRenderResolution = "4K",
+        worldCreationScope = "EXPANDED WORLD CREATION",
+        maxRenderResolution = "UP TO 4K",
         modelDownloadLimit = 10,
-        modelCreationLimit = 50,
+        modelCreationLimit = null,
         forgeSpeed = "FAST",
-        fullPlanetCreation = false,
-        advancedLandscapes = true
+        fullPlanetCreation = false
     )
     PersonaForgeTier.VIP -> PersonaForgeCapabilities(
-        worldContinents = null,
-        maxRenderResolution = "8K",
+        worldCreationScope = "COMPLETE CUSTOM PLANET",
+        maxRenderResolution = "UP TO 8K",
         modelDownloadLimit = null,
         modelCreationLimit = null,
         forgeSpeed = "ULTRA",
-        fullPlanetCreation = true,
-        advancedLandscapes = true
+        fullPlanetCreation = true
     )
 }
