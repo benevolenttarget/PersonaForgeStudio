@@ -40,23 +40,14 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
-private val Cyan = Color(0xFF62D8FF)
-private val CyanBright = Color(0xFFB9F2FF)
-private val Blue = Color(0xFF248CFF)
-private val Lime = Color(0xFF69FF9A)
-private val Red = Color(0xFFFF4A4A)
-private val Glass = Color(0xB80A1820)
-private val GlassLight = Color(0x5038BFE8)
+private val Cyan = Color(0xFF64DFFF)
+private val White = Color(0xFFD8FAFF)
+private val Lime = Color(0xFF70FF9C)
+private val Red = Color(0xFFFF6262)
+private val Glass = Color(0x3A0B4255)
 
-/**
- * Environment presented behind the PersonaForge HUD.
- * CINEMATIC is the default product environment. CLOSING_SCENE is an optional
- * visual mode reserved for the closing-scene environment asset when supplied.
- */
-enum class PersonaForgeEnvironment {
-    CINEMATIC,
-    CLOSING_SCENE
-}
+/** The visual source of truth is the cinematic HUD: environment first, HUD second. */
+enum class PersonaForgeEnvironment { CINEMATIC, CLOSING_SCENE }
 
 @Composable
 fun HomeScreen(
@@ -64,380 +55,203 @@ fun HomeScreen(
     onCreateAdventure: () -> Unit = {},
     onOpenProject: () -> Unit = {},
     onSettings: () -> Unit = {},
+    onStoryMode: () -> Unit = {},
+    onInventory: () -> Unit = {},
+    onStore: () -> Unit = {},
     environment: PersonaForgeEnvironment = PersonaForgeEnvironment.CINEMATIC
 ) {
-    val transition = rememberInfiniteTransition(label = "persona_forge_hud")
-    val pulse by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1700), RepeatMode.Reverse),
-        label = "pulse"
-    )
-    val scan by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(4200)),
-        label = "scan"
-    )
-    val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(14000)),
-        label = "rotation"
-    )
-
-    val particles = remember {
-        List(110) {
-            HoloParticle(
-                x = Random.nextFloat(),
-                y = Random.nextFloat(),
-                radius = 0.7f + Random.nextFloat() * 2.2f,
-                phase = Random.nextFloat() * 6.283f,
-                speed = 0.3f + Random.nextFloat() * 1.4f
-            )
-        }
-    }
+    val transition = rememberInfiniteTransition(label = "persona_hud")
+    val pulse by transition.animateFloat(.35f, 1f, infiniteRepeatable(tween(1500), RepeatMode.Reverse), label = "pulse")
+    val scan by transition.animateFloat(0f, 1f, infiniteRepeatable(tween(4200)), label = "scan")
+    val rotation by transition.animateFloat(0f, 360f, infiniteRepeatable(tween(12000)), label = "rotation")
+    val particles = remember { List(120) { HoloParticle(Random.nextFloat(), Random.nextFloat(), Random.nextFloat() * 6.28f) } }
 
     Box(Modifier.fillMaxSize()) {
-        CinematicEnvironment(
-            environment = environment,
-            particles = particles,
-            pulse = pulse,
-            scan = scan
-        )
-
-        HologramAtmosphere(pulse = pulse, scan = scan)
+        CinematicEnvironment(environment, particles, scan, pulse)
+        HudFrame(pulse, scan)
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            HudHeader(pulse)
+            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                HudText("PERSONAFORGE // CYNTHIA", White, 10)
+                HudText("ANDROID TRACE // NEGATIVE", Red, 9)
+            }
 
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                // Cynthia remains the focal point. The current implementation is
-                // deliberately an animated holographic projection shell; a real
-                // character render can be supplied later without changing the HUD.
-                CynthiaProjection(pulse = pulse, rotation = rotation)
-
-                HudPanel(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(top = 20.dp),
-                    title = "PERSONA FORGE",
-                    lines = listOf("DEVICE ONLINE", "MULTIVERSE LINK", "FORGE READY"),
-                    accent = Cyan
-                )
+            Box(Modifier.fillMaxWidth().weight(1f), Alignment.Center) {
+                CynthiaProjection(rotation, pulse)
 
                 HudPanel(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(top = 20.dp),
-                    title = "TRACE",
-                    lines = listOf("ANDROID: NEGATIVE", "SIGNAL: STABLE", "RIFT: ACTIVE"),
-                    accent = Red
+                    Modifier.align(Alignment.CenterStart).padding(start = 4.dp),
+                    "PERSONAFORGE DEVICE",
+                    listOf("ONLINE", "RIFT LINK ACTIVE", "FORGE READY"), Cyan
                 )
-
-                HologramPlatform(
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    rotation = rotation,
-                    pulse = pulse
+                HudPanel(
+                    Modifier.align(Alignment.CenterEnd).padding(end = 4.dp),
+                    "INVESTIGATION",
+                    listOf("TRACE NEGATIVE", "SIGNAL STABLE", "CHAPTER 01"), Red
                 )
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "CYNTHIA // LINK ESTABLISHED",
-                    color = CyanBright.copy(alpha = 0.75f + pulse * 0.2f),
-                    fontSize = 10.sp,
-                    letterSpacing = 2.sp
-                )
-                Spacer(Modifier.height(5.dp))
+                HudText("CYNTHIA // LINK ESTABLISHED", Cyan.copy(alpha = .8f + pulse * .15f), 10)
+                Spacer(Modifier.height(4.dp))
                 Text(
                     "\"We're clear. What shall we forge?\"",
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = White.copy(alpha = .92f),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Light
                 )
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(10.dp))
 
-                HologramCommandRail(
-                    onCreateCharacter = onCreateCharacter,
-                    onCreateAdventure = onCreateAdventure,
-                    onOpenProject = onOpenProject,
-                    onSettings = onSettings
-                )
-
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "PERSONAFORGE // STORY MODE // CHAPTER 01",
-                    color = Lime.copy(alpha = 0.55f + pulse * 0.15f),
-                    fontSize = 8.sp,
-                    letterSpacing = 1.5.sp
-                )
+                // Holographic controls: no Material buttons and no opaque cards.
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(5.dp)) {
+                    HoloCommand("CHARACTER", "FORGE", Cyan, onCreateCharacter, Modifier.weight(1f))
+                    HoloCommand("WORLD", "FORGE", Cyan, onCreateAdventure, Modifier.weight(1f))
+                    HoloCommand("STORY", "MODE", Lime, onStoryMode, Modifier.weight(1f))
+                    HoloCommand("PROJECTS", "OPEN", Lime, onOpenProject, Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(5.dp))
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(5.dp)) {
+                    HoloCommand("INVENTORY", "UNLOCKS", Cyan, onInventory, Modifier.weight(1f))
+                    HoloCommand("STORE", "ONLINE", Lime, onStore, Modifier.weight(1f))
+                    HoloCommand("DEVICE", "SYSTEM", Red, onSettings, Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(7.dp))
+                HudText("PERSONAFORGE // STORY MODE // CHAPTER 01", Lime.copy(alpha = .72f), 8)
             }
         }
     }
 }
 
-private data class HoloParticle(
-    val x: Float,
-    val y: Float,
-    val radius: Float,
-    val phase: Float,
-    val speed: Float
-)
+private data class HoloParticle(val x: Float, val y: Float, val phase: Float)
 
 @Composable
 private fun CinematicEnvironment(
     environment: PersonaForgeEnvironment,
     particles: List<HoloParticle>,
-    pulse: Float,
-    scan: Float
+    scan: Float,
+    pulse: Float
 ) {
-    Canvas(
-        Modifier.fillMaxSize().background(
-            Brush.verticalGradient(
-                when (environment) {
-                    PersonaForgeEnvironment.CINEMATIC -> listOf(
-                        Color(0xFF15262A), Color(0xFF354B43), Color(0xFF8B6D49), Color(0xFF1B1713)
-                    )
-                    PersonaForgeEnvironment.CLOSING_SCENE -> listOf(
-                        Color(0xFF071419), Color(0xFF102B2B), Color(0xFF25362F), Color(0xFF0A1110)
-                    )
-                }
-            )
+    Canvas(Modifier.fillMaxSize().background(
+        Brush.verticalGradient(
+            if (environment == PersonaForgeEnvironment.CLOSING_SCENE) {
+                listOf(Color(0xFF78949A), Color(0xFFB7C0B6), Color(0xFF5A705F), Color(0xFF202824))
+            } else {
+                listOf(Color(0xFF667F7F), Color(0xFF9BAEA1), Color(0xFF596B59), Color(0xFF252A23))
+            }
         )
-    ) {
+    )) {
         val w = size.width
         val h = size.height
 
-        // Layered cinematic terrain: intentionally subordinate to the HUD.
-        val terrain = Path().apply {
-            moveTo(0f, h * 0.62f)
-            when (environment) {
-                PersonaForgeEnvironment.CINEMATIC -> {
-                    lineTo(w * 0.13f, h * 0.43f)
-                    lineTo(w * 0.26f, h * 0.55f)
-                    lineTo(w * 0.39f, h * 0.35f)
-                    lineTo(w * 0.53f, h * 0.51f)
-                    lineTo(w * 0.68f, h * 0.39f)
-                    lineTo(w * 0.82f, h * 0.53f)
-                    lineTo(w, h * 0.41f)
-                }
-                PersonaForgeEnvironment.CLOSING_SCENE -> {
-                    lineTo(w * 0.12f, h * 0.50f)
-                    lineTo(w * 0.23f, h * 0.35f)
-                    lineTo(w * 0.32f, h * 0.53f)
-                    lineTo(w * 0.46f, h * 0.32f)
-                    lineTo(w * 0.61f, h * 0.50f)
-                    lineTo(w * 0.76f, h * 0.36f)
-                    lineTo(w, h * 0.51f)
-                }
-            }
+        // Forest/mountain silhouette matching the cinematic composition. The real
+        // photoreal scene is intentionally an asset slot rather than a fake gradient.
+        val mountains = Path().apply {
+            moveTo(0f, h * .60f)
+            lineTo(w * .12f, h * .42f)
+            lineTo(w * .24f, h * .55f)
+            lineTo(w * .38f, h * .34f)
+            lineTo(w * .52f, h * .51f)
+            lineTo(w * .67f, h * .38f)
+            lineTo(w * .83f, h * .52f)
+            lineTo(w, h * .41f)
             lineTo(w, h)
             lineTo(0f, h)
             close()
         }
-        drawPath(terrain, Color.Black.copy(alpha = 0.32f))
+        drawPath(mountains, Color(0xFF31463E).copy(alpha = .72f))
 
-        val horizon = h * 0.69f
-        for (i in 0..12) {
-            val t = i / 12f
+        for (i in 0..16) {
+            val x = i * w / 16f
+            val top = h * (.25f + ((i * 17) % 9) / 35f)
+            drawLine(Color(0xFF1B302A).copy(alpha = .62f), Offset(x, h * .64f), Offset(x, top), 4f)
+            drawLine(Color(0xFF1B302A).copy(alpha = .55f), Offset(x, top + 30f), Offset(x - 22f, top + 70f), 2.5f)
+            drawLine(Color(0xFF1B302A).copy(alpha = .55f), Offset(x, top + 42f), Offset(x + 24f, top + 82f), 2.5f)
+        }
+
+        val horizon = h * .69f
+        for (i in 0..11) {
+            val t = i / 11f
             val y = horizon + (h - horizon) * t * t
-            drawLine(Cyan.copy(alpha = 0.035f + pulse * 0.018f), Offset(0f, y), Offset(w, y), 1f)
+            drawLine(Cyan.copy(alpha = .025f + pulse * .012f), Offset(0f, y), Offset(w, y), 1f)
         }
-        for (i in -14..14) {
-            val x = w / 2f + i * w * 0.055f
-            drawLine(Cyan.copy(alpha = 0.028f), Offset(w / 2f, horizon), Offset(x, h), 1f)
-        }
-
-        particles.forEach { particle ->
-            val drift = sin(scan * particle.speed * 6.283f + particle.phase) * 8f
-            val x = particle.x * w + drift
-            val y = (particle.y * h - scan * 30f * particle.speed + h) % h
-            drawCircle(
-                Lime.copy(alpha = 0.08f + pulse * 0.28f),
-                particle.radius,
-                Offset(x, y)
-            )
+        for (i in -13..13) {
+            drawLine(Cyan.copy(alpha = .022f), Offset(w / 2f, horizon), Offset(w / 2f + i * w * .065f, h), 1f)
         }
 
-        drawLine(
-            Cyan.copy(alpha = 0.08f),
-            Offset(0f, scan * h),
-            Offset(w, scan * h),
-            1.5f
-        )
+        particles.forEach {
+            val x = it.x * w + sin(scan * 6.28f + it.phase) * 9f
+            val y = (it.y * h - scan * 30f + h) % h
+            drawCircle(Lime.copy(alpha = .08f + pulse * .24f), 1.5f, Offset(x, y))
+        }
     }
 }
 
 @Composable
-private fun HologramAtmosphere(pulse: Float, scan: Float) {
+private fun HudFrame(pulse: Float, scan: Float) {
     Canvas(Modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
-        drawRect(
-            Brush.radialGradient(
-                listOf(Cyan.copy(alpha = 0.09f + pulse * 0.035f), Color.Transparent),
-                center = Offset(w / 2f, h * 0.58f),
-                radius = w * 0.62f
-            )
-        )
-        drawRect(Cyan.copy(alpha = 0.018f), topLeft = Offset(0f, scan * h), size = androidx.compose.ui.geometry.Size(w, 2f))
+        val p = 7f
+        val c = 30f
+        val frame = Path().apply {
+            moveTo(p + c, p); lineTo(w - p - c, p); lineTo(w - p, p + c)
+            lineTo(w - p, h - p - c); lineTo(w - p - c, h - p); lineTo(p + c, h - p)
+            lineTo(p, h - p - c); lineTo(p, p + c); close()
+        }
+        drawPath(frame, Cyan.copy(alpha = .82f), style = Stroke(2.4f, join = StrokeJoin.Round))
+        drawPath(frame, Cyan.copy(alpha = .10f + pulse * .03f), style = Stroke(10f))
+        drawLine(Cyan.copy(alpha = .10f), Offset(0f, scan * h), Offset(w, scan * h), 1.5f)
     }
 }
 
 @Composable
-private fun CynthiaProjection(pulse: Float, rotation: Float) {
-    Canvas(Modifier.size(width = 250.dp, height = 330.dp)) {
-        val center = Offset(size.width / 2f, size.height * 0.43f)
-        val bodyHeight = size.height * 0.62f
-        val glow = 0.18f + pulse * 0.12f
-
-        drawCircle(Cyan.copy(alpha = glow), 88f, center)
-
-        // Head and shoulders: intentionally a projection silhouette, not a fake
-        // photoreal character. This keeps the architecture ready for a real model.
-        drawCircle(CyanBright.copy(alpha = 0.52f), 28f, Offset(center.x, center.y - 58f), style = Stroke(2.2f))
-
+private fun CynthiaProjection(rotation: Float, pulse: Float) {
+    Canvas(Modifier.size(270.dp, 350.dp)) {
+        val c = Offset(size.width / 2f, size.height * .40f)
+        drawCircle(Cyan.copy(alpha = .10f + pulse * .06f), 120f, c)
+        drawCircle(White.copy(alpha = .55f), 29f, Offset(c.x, c.y - 62f), style = Stroke(2.4f))
         val body = Path().apply {
-            moveTo(center.x - 46f, center.y - 28f)
-            lineTo(center.x - 70f, center.y + 30f)
-            lineTo(center.x - 38f, center.y + 42f)
-            lineTo(center.x - 30f, center.y + bodyHeight * 0.44f)
-            lineTo(center.x - 10f, center.y + bodyHeight * 0.44f)
-            lineTo(center.x, center.y + bodyHeight * 0.10f)
-            lineTo(center.x + 10f, center.y + bodyHeight * 0.44f)
-            lineTo(center.x + 30f, center.y + bodyHeight * 0.44f)
-            lineTo(center.x + 38f, center.y + 42f)
-            lineTo(center.x + 70f, center.y + 30f)
-            lineTo(center.x + 46f, center.y - 28f)
+            moveTo(c.x - 48f, c.y - 30f); lineTo(c.x - 78f, c.y + 38f); lineTo(c.x - 40f, c.y + 52f)
+            lineTo(c.x - 28f, c.y + 144f); lineTo(c.x + 28f, c.y + 144f); lineTo(c.x + 40f, c.y + 52f)
+            lineTo(c.x + 78f, c.y + 38f); lineTo(c.x + 48f, c.y - 30f); close()
         }
-        drawPath(body, Cyan.copy(alpha = 0.48f), style = Stroke(2f, join = StrokeJoin.Round))
-
-        for (i in -3..3) {
-            val y = center.y - 80f + i * 22f
-            drawLine(CyanBright.copy(alpha = 0.18f), Offset(center.x - 55f, y), Offset(center.x + 55f, y), 1f)
+        drawPath(body, Cyan.copy(alpha = .38f), style = Stroke(2.2f, join = StrokeJoin.Round))
+        for (i in -4..5) {
+            val y = c.y - 88f + i * 24f
+            drawLine(White.copy(alpha = .15f), Offset(c.x - 60f, y), Offset(c.x + 60f, y), 1f)
         }
-
-        val orbit = Math.toRadians(rotation.toDouble())
-        val ringPoint = Offset(
-            center.x + cos(orbit).toFloat() * 92f,
-            center.y + sin(orbit).toFloat() * 32f
-        )
-        drawCircle(Lime.copy(alpha = 0.9f), 3.5f, ringPoint)
-
-        drawArc(
-            Rect(center.x - 98f, center.y - 42f, center.x + 98f, center.y + 42f),
-            startAngle = rotation,
-            sweepAngle = 105f,
-            useCenter = false,
-            color = CyanBright.copy(alpha = 0.75f),
-            style = Stroke(2f, cap = StrokeCap.Round)
-        )
-    }
-}
-
-@Composable
-private fun HologramPlatform(modifier: Modifier, rotation: Float, pulse: Float) {
-    Canvas(modifier.size(width = 250.dp, height = 80.dp)) {
-        val c = Offset(size.width / 2f, size.height * 0.55f)
-        drawOval(
-            Cyan.copy(alpha = 0.12f + pulse * 0.06f),
-            topLeft = Offset(c.x - 105f, c.y - 20f),
-            size = androidx.compose.ui.geometry.Size(210f, 40f)
-        )
-        drawOval(
-            CyanBright.copy(alpha = 0.65f),
-            topLeft = Offset(c.x - 92f, c.y - 16f),
-            size = androidx.compose.ui.geometry.Size(184f, 32f),
-            style = Stroke(2f)
-        )
-        drawOval(
-            Lime.copy(alpha = 0.5f),
-            topLeft = Offset(c.x - 62f, c.y - 10f),
-            size = androidx.compose.ui.geometry.Size(124f, 20f),
-            style = Stroke(1f)
-        )
         val a = Math.toRadians(rotation.toDouble())
-        drawCircle(Lime, 3f, Offset(c.x + cos(a).toFloat() * 84f, c.y + sin(a).toFloat() * 12f))
+        drawArc(Rect(c.x - 105f, c.y - 45f, c.x + 105f, c.y + 45f), rotation, 105f, false, Cyan, style = Stroke(2f, cap = StrokeCap.Round))
+        drawCircle(Lime, 4f, Offset(c.x + cos(a).toFloat() * 96f, c.y + sin(a).toFloat() * 28f))
+
+        val py = size.height - 56f
+        drawOval(Cyan.copy(alpha = .20f + pulse * .07f), Offset(c.x - 112f, py), androidx.compose.ui.geometry.Size(224f, 42f))
+        drawOval(White.copy(alpha = .75f), Offset(c.x - 98f, py + 5f), androidx.compose.ui.geometry.Size(196f, 32f), style = Stroke(2f))
+        drawOval(Lime.copy(alpha = .48f), Offset(c.x - 62f, py + 12f), androidx.compose.ui.geometry.Size(124f, 18f), style = Stroke(1f))
     }
 }
 
 @Composable
-private fun HudHeader(pulse: Float) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        HudText("CYNTHIA // PERSONAFORGE", CyanBright.copy(alpha = 0.8f + pulse * 0.15f), 10)
-        HudText("ANDROID TRACE // NEGATIVE", Red.copy(alpha = 0.65f + pulse * 0.2f), 9)
-    }
-}
-
-@Composable
-private fun HudPanel(
-    modifier: Modifier,
-    title: String,
-    lines: List<String>,
-    accent: Color
-) {
-    Column(
-        modifier = modifier
-            .width(150.dp)
-            .background(Glass)
-            .padding(12.dp)
-    ) {
-        Canvas(Modifier.fillMaxWidth().height(8.dp)) {
-            drawLine(accent.copy(alpha = 0.8f), Offset(0f, 1f), Offset(size.width * 0.72f, 1f), 1.5f)
-            drawLine(accent.copy(alpha = 0.35f), Offset(size.width * 0.82f, 1f), Offset(size.width, 1f), 1f)
-        }
+private fun HudPanel(modifier: Modifier, title: String, lines: List<String>, accent: Color) {
+    Column(modifier.width(148.dp).background(Glass).padding(10.dp)) {
         HudText(title, accent, 9)
-        Spacer(Modifier.height(6.dp))
-        lines.forEach { HudText(it, Color.White.copy(alpha = 0.72f), 8) }
+        Spacer(Modifier.height(5.dp))
+        lines.forEach { HudText(it, White.copy(alpha = .70f), 8) }
     }
 }
 
 @Composable
-private fun HologramCommandRail(
-    onCreateCharacter: () -> Unit,
-    onCreateAdventure: () -> Unit,
-    onOpenProject: () -> Unit,
-    onSettings: () -> Unit
-) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        HoloCommand("CHARACTER", "FORGE", Cyan, onCreateCharacter, Modifier.weight(1f))
-        HoloCommand("WORLD", "FORGE", Cyan, onCreateAdventure, Modifier.weight(1f))
-        HoloCommand("PROJECTS", "OPEN", Lime, onOpenProject, Modifier.weight(1f))
-        HoloCommand("DEVICE", "SYSTEM", Red, onSettings, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun HoloCommand(
-    label: String,
-    detail: String,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier
-) {
+private fun HoloCommand(label: String, detail: String, accent: Color, onClick: () -> Unit, modifier: Modifier) {
     Column(
-        modifier = modifier
-            .background(GlassLight)
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp, horizontal = 7.dp),
+        modifier.background(Glass).clickable(onClick = onClick).padding(vertical = 9.dp, horizontal = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(label, color = Color.White, fontSize = 8.sp, letterSpacing = 1.1.sp)
-        Spacer(Modifier.height(3.dp))
-        Text(detail, color = accent, fontSize = 7.sp, letterSpacing = 1.2.sp)
+        HudText(label, White, 8)
+        Spacer(Modifier.height(2.dp))
+        HudText(detail, accent, 7)
     }
 }
 
