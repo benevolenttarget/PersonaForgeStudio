@@ -19,41 +19,18 @@ fun PersonaForgeNavigation() {
             onCreateCharacter = { currentRoute = Routes.CHARACTER_WIZARD },
             onCreateAdventure = { currentRoute = Routes.WORLD_FORGE },
             onOpenProject = { currentRoute = Routes.PROJECTS },
-            onSettings = { currentRoute = Routes.DEVICE_SYSTEM }
+            onSettings = { currentRoute = Routes.DEVICE_SYSTEM },
+            onStoryMode = { currentRoute = Routes.STORY_MODE },
+            onInventory = { currentRoute = Routes.INVENTORY },
+            onStore = { currentRoute = Routes.STORE }
         )
 
-        Routes.CHARACTER_WIZARD -> CharacterWizard(
-            onBack = { currentRoute = Routes.HOME }
-        )
-
-        Routes.WORLD_FORGE -> HologramExperienceScreen(
-            ExperienceSection.WORLD,
-            onBack = { currentRoute = Routes.HOME }
-        )
-
-        Routes.STORY_MODE -> HologramExperienceScreen(
-            ExperienceSection.STORY,
-            onBack = { currentRoute = Routes.HOME }
-        )
-
-        Routes.PROJECTS -> HologramExperienceScreen(
-            ExperienceSection.PROJECTS,
-            onBack = { currentRoute = Routes.HOME }
-        )
-
-        Routes.INVENTORY -> HologramExperienceScreen(
-            ExperienceSection.INVENTORY,
-            onBack = { currentRoute = Routes.HOME }
-        )
-
-        Routes.STORE -> HologramExperienceScreen(
-            ExperienceSection.STORE,
-            onBack = { currentRoute = Routes.HOME }
-        )
-
-        Routes.DEVICE_SYSTEM -> HologramExperienceScreen(
-            ExperienceSection.DEVICE,
-            onBack = { currentRoute = Routes.HOME }
-        )
+        Routes.CHARACTER_WIZARD -> CharacterWizard { currentRoute = Routes.HOME }
+        Routes.WORLD_FORGE -> HologramExperienceScreen(ExperienceSection.WORLD) { currentRoute = Routes.HOME }
+        Routes.STORY_MODE -> HologramExperienceScreen(ExperienceSection.STORY) { currentRoute = Routes.HOME }
+        Routes.PROJECTS -> HologramExperienceScreen(ExperienceSection.PROJECTS) { currentRoute = Routes.HOME }
+        Routes.INVENTORY -> HologramExperienceScreen(ExperienceSection.INVENTORY) { currentRoute = Routes.HOME }
+        Routes.STORE -> HologramExperienceScreen(ExperienceSection.STORE) { currentRoute = Routes.HOME }
+        Routes.DEVICE_SYSTEM -> HologramExperienceScreen(ExperienceSection.DEVICE) { currentRoute = Routes.HOME }
     }
 }
