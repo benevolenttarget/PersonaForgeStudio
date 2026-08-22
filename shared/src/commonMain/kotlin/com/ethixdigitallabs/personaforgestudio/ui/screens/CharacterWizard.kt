@@ -3,6 +3,7 @@ package com.ethixdigitallabs.personaforgestudio.ui.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
@@ -73,7 +73,6 @@ fun CharacterWizard(onBack: () -> Unit = {}) {
                 Spacer(Modifier.height(8.dp))
                 HudText("Cynthia will build the character from your specifications.", White.copy(alpha = .72f), 9)
                 Spacer(Modifier.height(22.dp))
-
                 Box(Modifier.fillMaxWidth(.78f).height(2.dp).background(Cyan.copy(alpha = .55f)))
                 Spacer(Modifier.height(18.dp))
 
